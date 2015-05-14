@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block otherstyles %}
+    <link href="static/css/ryu.topology.css" rel="stylesheet">
+{% endblock %}
+{% block main %}
+		<div class="well hero-unit" id="topoContainer" style="height:250px">
+            <!-- <h1>Welcome, Admin</h1>
+            <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Etiam eget ligula eu lectus lobortis condimentum. Aliquam nonummy auctor massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. </p>
+            <p><a class="btn btn-success btn-large" href="users.html">Manage Users &raquo;</a></p> -->
+          </div>
+          <div class="row-fluid">
+            <div class="span2"></div>
+            <div class="span3">
+              <h3>Total flowenties</h3>
+              <p><a href="users.html" id="entrynum" class="badge badge-inverse">563</a></p>
+            </div>
+            <div class="span3">
+              <h3>Switches</h3>
+              <p><a href="users.html" id="switchnum" class="badge badge-inverse">8</a></p>
+            </div>
+            <div class="span3">
+              <h3>Links</h3>
+			        <p><a href="users.html" id="linknum"  class="badge badge-inverse">2</a></p>
+            </div>
+            <!-- <div class="span3">
+              <h3>Roles</h3>
+			  <p><a href="roles.html" class="badge badge-inverse">3</a></p>
+            </div> -->
+          </div>
+		  <br />
+		  <div class="row-fluid">
+			<div class="page-header">
+				<div class="row-fluid">
+				<h1 class="pull-left">Flow Entries <small>for switch 1</small></h1>
+				<select id='switchselect' class='pull-right'>
+					<option>All switches</option>
+					
+				</select>
+				</div>
+			</div>
+			<table class="table table-bordered">
+				<thead>
+					<tr>
+						<th>DPID</th>
+						<th>Actions</th>
+						<th>Match</th>
+						<th>packet_count</th>
+						<th>priority</th>
+						<th>idle_timeout</th>
+						<th>hard_timeout</th>
+						<th>Operations</th>
+					</tr>
+				</thead>
+				<tbody id="entries">
+				</tbody>
+			</table>
+		  </div>
+{% endblock %}
+{% block otherscripts %}
+<script src="{{url_for('static',filename='js/underscore.min.js')}}"></script>
+<script src="{{url_for('static',filename='js/d3.min.js')}}"></script>
+<script src="{{url_for('static',filename='js/ryu.topology.js')}}"></script>
+<script src="{{url_for('static',filename='js/jquery.json.min.js')}}"></script>
+<script id="entry_temp">
+				<tr class="pending-user">
+					<td><%= dpid  %></td>
+					<td><%= actions %></td>
+					<td><%= matches %></td>
+					<td><%= packet_count %></td>
+					<td><%= priority %></td>
+					<td><%= hard_timeout %></td>
+					<td><%= idle_timeout %>
+					<td><span class="user-actions"><a href="javascript:void(0);" class="label label-success">Details</a><!-- <a href="javascript:void(0);" class="label label-important">Reject</a></span></td>-->
+				</tr>
+</script>
+<script>
+switches_addr = "{{ url_for('topoSwitches') }}";
+links_addr = "{{ url_for('topoLinks') }}";
+initWsClient("{{ wsServerAddr }}");
+flowUrl = "{{ url_for('flow',id='') }}"
+routerSvgUrl = "{{ url_for('static',filename='js/router.svg') }}"
+var containerQuery = "#topoContainer"
+var getFlowAddr = "{{ url_for('flow',id=0) }}";
+var currentEnts = [];
+var entry_temp = _.template($("#entry_temp").text());
+function getFlowEntry(dpid,callback)
+{
+	$.getJSON(getFlowAddr+dpid,callback);
+}
+function initIndexEntryTable(dpid,switches)
+{
+	var currentEnts = [];
+	$("#entries").html('');
+	function callback(data)
+	{
+		var items = data.content;
+		for (var id in items)
+		{
+			var ents = items[id];
+			for(var i in ents)
+			{
+				currentEnts.push(ents[i]);
+				ents[i]['dpid'] = id;
+				ents[i]['actions'] = ents[i]['actions'].join(';');
+				ents[i]['matches'] = $.toJSON(ents[i]['match']);
+				$('#entries').append($(entry_temp(ents[i])));
+			}
+		}		
+	}
+	if(dpid == 0)
+	{
+		for(var s in switches)
+		{
+			$.getJSON(getFlowAddr+switches[s],callback);
+		}
+	}
+	else
+	{
+		$.getJSON(getFlowAddr+dpid,callback);
+	}
+}
+$(document).ready(function(){
+	CONF.force.width = $("#topoContainer").width();
+	CONF.force.height = $('#topoContainer').height();
+	topo_main();
+	$.getJSON("{{ url_for('topoSwitches') }}",function(data){
+		$("#switchnum").text(data['content'].length);	
+		var switches = data['content'];
+		var dpids = [];
+		for(var x in switches)
+		{
+			var dpid = parseInt(switches[x]['dpid']);
+			dpids.push(dpid);
+			$("#switchselect").append($('<option value="'+dpid+'">Switch '+dpid+'</option>'));
+		}
+		console.log(dpids);
+		initIndexEntryTable(0,dpids);
+		$("#switchselect").change(function(){
+			var dpid = $(this).val();
+			if(dpid)
+			{
+				initIndexEntryTable(dpid)	
+			}
+		});
+	});
+
+	$.getJSON("{{ url_for('topoLinks') }}",function(data){
+		$("#linknum").text(data['content'].length);
+	});
+
+	$.getJSON("{{ url_for('entrynum') }}",function(data){
+		$('#entrynum').text(data.content);	
+	});
+
+	$("#switchselect").change(function(){
+		var dpid = $(this).val();
+		if(dpid)
+		{
+			initIndexEntryTable(dpid)	
+		}
+	})
+})
+</script>
+{% endblock %}

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='css/ryu.topology.css') }}">
+<script src="{{ url_for('static',filename='js/d3.min.js') }}" charset="utf-8"></script>
+<style>
+#topoContainer
+{
+	height : 500;
+	width : 960;
+	margin : 0,auto;
+}
+</style>
+</head>
+<body>
+<div id="topoContainer"></div>
+<script src="{{ url_for('static',filename='js/ryu.topology.js')}}" charset="utf-8"></script>
+<script>
+	switches_addr = "{{ url_for('topoSwitches') }}";
+	links_addr = "{{ url_for('topoLinks') }}";
+	initWsClient("{{ wsServerAddr }}");
+	flowUrl = "{{ url_for('flow',id='') }}"
+	routerSvgUrl = "{{ url_for('static',filename='js/router.svg') }}"
+	var containerQuery = "#topoContainer"
+	topo_main();	
+	
+</script>
+</body>
+</html>
