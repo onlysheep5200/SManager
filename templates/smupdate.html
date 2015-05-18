@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% block main %}
+ <div class="row-fluid">
+			<div class="page-header">
+				<h1>Flow Entry Detail <small>update flow entry</small></h1>
+			</div>
+			 <form id="mainform" class="form-horizontal">
+    <fieldset>
+    <div class="control-group">
+
+          <!-- Select Basic -->
+          <label class="control-label">DPID</label>
+          <div class="controls">
+            <select id="dps" class="input-xlarge">
+				<option value="{{ entry['dpid'] }}">{{ entry['dpid'] }}</option>
+      		</select>
+          </div>
+
+        </div>
+
+    <div class="control-group">
+
+          <!-- Text input-->
+          <label class="control-label" for="input01">Idle Timeout</label>
+          <div class="controls">
+				  <input id="idle_timeout" type="text" placeholder="Please enter the idle timeout.Default is 0." class="input-xlarge checkable" data-checktype="int" value="{{ entry['idle_timeout'] }}"/>
+            <p class="help-block"></p>
+          </div>
+    </div>
+
+    <div class="control-group">
+
+          <!-- Text input-->
+          <label class="control-label" for="input01">Hard Timeout</label>
+          <div class="controls">
+				  <input type="text" id='hard_timeout' data-checktype="int" placeholder="Please enter the hard timeout.Default is 0" class="input-xlarge checkable" value="{{ entry['hard_timeout'] }}">
+            <p class="help-block"></p>
+          </div>
+        </div>
+
+    <div class="control-group">
+
+          <!-- Text input-->
+          <label class="control-label" for="input01">Priority</label>
+          <div class="controls">
+				  <input id="priority" data-checktype='int' type="text" placeholder="Please enter the priority. Default is 0." class="input-xlarge checkable" value="{{ entry['priority'] }}">
+            <p class="help-block"></p>
+          </div>
+        </div>
+
+    
+
+    
+
+    
+
+    <div class="control-group">
+
+          <!-- Select Multiple -->
+          <label class="control-label">Match</label>
+          <div class="controls">
+            <select id="matches" class="input-xlarge" multiple="multiple">
+				{% for match in entry['match'] %}
+				<option class='mupdatetrigger' data-mode='update' data-type="{{ match }}-{{ entry['match'][match] }}" value="{{ match }}-{{ entry['match'][match] }}">{{ match }}:{{ entry['match'][match] }}</option>
+				{% endfor %}
+				<option style="color:rgb(242,242,242);" id="match-modal-trigger" data-type="add match" data-mode="add"><center>add</center></option>
+     		</select>
+          </div>
+        </div>
+
+    <div class="control-group">
+
+          <!-- Select Multiple -->
+          <label class="control-label">Actions</label>
+          <div class="controls">
+            <select id="actions" class="input-xlarge" multiple="multiple">
+				{% for action in entry['actions'] %}
+				<option class="aupdatetrigger" data-mode="update" data-type="{{ action }}-{{ entry['actions'][action]  }}" value="{{ action }}-{{ entry['actions'][action] }}">{{ action }}:{{ entry['actions'][action] }}</option>
+				{% endfor %}
+				<option id="action-modal-trigger" style="color:rbg(242,242,242)" data-type="add action" data-mode ="add"><center>add</center></option>
+      		</select>
+          </div>
+        </div>
+		<div class="form-actions">
+			<input type="submit" class="btn btn-success btn-large" value="Update Entry" /> <button class="btn" id="cancelbutton">Cancel</button>
+		</div>			
+    </fieldset>
+  </form>
+  </div>
+  <div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  		<div class="modal-header">
+    		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    		<h3 id="myModalLabel">Modal header</h3>
+  		</div>
+  		<div class="modal-body">
+    		<form action="" class="form-horizontal">
+    			<fieldset>
+    				<div class="control-group">
+
+          <!-- Select Basic -->
+         				<label class="control-label">Type</label>
+          				<div class="controls">
+            				<select id="modal_select" class="input-xlarge">
+      							
+      						  </select>
+          				</div>
+
+        			</div>
+        			<div class="control-group">
+
+          <!-- Select Basic -->
+         				<label class="control-label">Content</label>
+          				<div class="controls">
+            				<input id="modal_content" type="text" class="input-xlarge" placehodler="please enter the content for matching type" />
+          				</div>
+
+        			</div>
+    			</fieldset>
+    		</form>
+  		</div>
+  		<div class="modal-footer">
+    		<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+    		<button class="btn btn-primary" id="savebtn">Save</button>
+  		</div>
+	</div>
+{% endblock %}
+{% block otherscripts  %}
+<script src="{{ url_for('static',filename='js/flowentryupdate.js') }}"></script>
+<script src="{{ url_for('static',filename='js/jquery.json.min.js') }}"></script>
+  <script>
+	  var rawEntry = {{ rawEntry|tojson|safe }};
+	  var adata = {{ actiontypes|tojson|safe }};
+	  var mdata = {{ matchtypes|tojson|safe }};
+      var actionModal = new Popup("#action-modal-trigger");
+      var matchModal = new Popup("#match-modal-trigger");
+      var aupdateModal;
+      var mupdateModal;
+	  var updateAddr = "{{ url_for('update') }}";
+      function refreshUpdatePopup()
+      {
+        console.log("refreshupdate");
+        function onsave(d){
+              var type = $("#modal_select").val();
+              var content = $("#modal_content").val();
+              var itemContent = type+"   :   "+content;
+              var dataId = type+'-'+content;
+
+              if($(this).hasClass('mupdatetrigger') && !content)
+              {
+                alert("Content should not be empty");
+                return ;
+              }
+              console.log(d);
+              $(this).text(itemContent).attr('data-type',dataId).val(type+'-'+content);
+              refreshUpdatePopup();
+              closeModal();
+        }
+        function ondelete(d){
+          $(this).remove();
+          closeModal();
+        }
+        aupdateModal = new Popup('.aupdatetrigger');
+        mupdateModal = new Popup('.mupdatetrigger');
+        aupdateModal.config({
+            selectData : adata,
+            titleLabel : '#myModalLabel',
+            closeItem : '[data-dismiss="modal"]',
+            onSave : onsave,
+            onDelete: ondelete, 
+        });
+        mupdateModal.config({
+            selectData : mdata,
+            titleLabel : '#myModalLabel',
+            closeItem : '[data-dismiss="modal"]',
+            onSave : onsave,
+            onDelete: ondelete, 
+        });
+        mupdateModal.watching("#myModal");
+        aupdateModal.watching("#myModal");
+      }
+      function closeModal()
+      {
+          $('[data-dismiss="modal"]').trigger('click');
+      }
+		
+	 function getValByType(val)
+	 {
+		  var a = parseInt(val);
+		  if(!isNaN(a))
+		 	return a;
+		  else
+		  {
+			a = parseFloat(val);
+			if(!isNaN(a))
+				return a;
+		  }
+		  return val;
+	 }	 
+	  
+	 function onsubmit()
+	 {
+		console.log('onsubmit');
+		var arg = {};
+		arg.dpid = parseInt($("#dps").val());
+		arg.idle_timeout = parseInt($('#idle_timeout').val());
+		arg.hard_timeout = parseInt($('#hard_timeout').val());
+		arg.priority = parseInt($("#priority").val());
+		var matches = {};
+		$("#matches").find('option').each(function(){
+			var content = $(this).val();
+			if(content && content!='' && content!='add')
+			{
+				matches[content.split('-')[0]] = getValByType(content.split('-')[1]);
+			}
+		});
+		arg.match = matches; 	
+		arg.table_id = 0;
+		var actions = [];
+		$("#actions").find('option').each(function(){
+			var content = $(this).val();
+			if(content && content!='' && content!='add')
+			{
+				var type = content.split('-')[0];
+				var leftover = content.split('-')[1];
+				if(leftover && leftover.indexOf(':')>0)
+				{
+					var items = leftover.split(',');
+					var obj = {'type':type};
+					for(var x in items)
+					{
+						var item = items[x];
+						if(item.indexOf(':')>0)
+						{
+							obj[item.split(':')[0]] = getValByType(item.split(':')[1]);
+						}
+					}	
+					actions.push(obj);
+				}	
+				else
+				{
+					actions.push({'type':type});
+				}
+			}	
+		});
+		arg.actions = actions;
+		arg = $.toJSON(arg);
+	   	$.post(updateAddr,{'arg':arg,'raw':$.toJSON(rawEntry)},function(data){
+			if(data.status == 'success')
+			{
+				alert('Update flow entry success');
+				location.href = '/index';
+			}			
+			else
+			{
+				alert('Add Failed : '+data.reason);
+			}
+		})	
+	 }
+
+      $.checkableForm("#mainform",onsubmit);
+	  $('#cancelbutton').click(function(){
+			location.href = '/index';			  
+	  })      
+      actionModal.config({
+          selectData : adata,
+          titleLabel : "#myModalLabel",
+          closeItem : '[data-dismiss="modal"]',
+          onSave : function(d){
+            var type = $("#modal_select").val();
+            var content = $("#modal_content").val();
+            var itemContent = type+"   :   "+content;
+            var dataId = type+'-'+content;
+
+            if($("[data-id='"+dataId+"']").size()>0)
+            {
+              alert("There is already a same item contains in list");
+              return;
+            }
+            $("#actions").prepend($("<option class='aupdatetrigger' data-mode='update'></option>").text(itemContent).attr('data-type',dataId).val(type+'-'+content));
+            refreshUpdatePopup();
+            closeModal();
+          },
+          onDelete : function(d){
+            ;
+          }
+      });
+      actionModal.watching("#myModal");
+
+      matchModal.config({
+          selectData : mdata,
+          titleLabel : "#myModalLabel",
+          closeItem : '[data-dismiss="modal"]',
+          onSave : function(d){
+            var type = $("#modal_select").val();
+            var content = $("#modal_content").val();
+            var itemContent = type+"   :   "+content;
+            var dataId = type+'-'+content;
+
+            if(!content)
+            {
+              alert("Content should not be empty");
+              return ;
+            }
+            if($("[data-id='"+dataId+"']").size()>0)
+            {
+              alert("There is already a same item contains in list");
+              return;
+            }
+            $("#matches").prepend($("<option class='mupdatetrigger' data-mode='update'></option>").text(itemContent).attr('data-type',dataId).val(type+'-'+content));
+            refreshUpdatePopup();
+            closeModal();
+          },
+          onDelete : function(d){
+            ;
+          }
+      });
+	 matchModal.watching('#myModal');
+	 refreshUpdatePopup();
+	 
+  </script>
+{% endblock %}
