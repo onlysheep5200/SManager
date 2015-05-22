@@ -32,10 +32,13 @@
 			<div class="page-header">
 				<div class="row-fluid">
 				<h1 class="pull-left">Flow Entries <small id="destswitch">for All Switches</small></h1>
+				<a class="btn btn-success pull-right" href="{{ url_for('add') }}">Add Entry</a>
+				&nbsp;&nbsp;&nbsp;
 				<select id='switchselect' class='pull-right'>
 					<option value="0">All switches</option>
 					
 				</select>
+				&nbsp;&nbsp;&nbsp;
 				</div>
 			</div>
 			<table class="table table-bordered">
@@ -70,7 +73,7 @@
 					<td><%= priority %></td>
 					<td><%= hard_timeout %></td>
 						<td><%= idle_timeout %>
-					<td><span class="user-actions"><a href="javascript:void(0);" class="label label-success">Details</a>&nbsp;<a href="#" class="label label-important deletelink">Delete</a></td>
+					<td><span class="user-actions"><a href="#" class="label label-success updatelink">Details</a>&nbsp;<a href="#" class="label label-important deletelink">Delete</a></td>
 				</tr>
 </script>
 <script>
@@ -81,9 +84,11 @@ flowUrl = "{{ url_for('flow',id='') }}"
 routerSvgUrl = "{{ url_for('static',filename='js/router.svg') }}"
 var containerQuery = "#topoContainer"
 var deleteFlowAddr = "{{ url_for('deleteentry') }}"
+var updateFlowAddr = "{{ url_for('update') }}"
 var getFlowAddr = "{{ url_for('flow',id=0) }}";
 var currentEnts = [];
 var entry_temp = _.template($("#entry_temp").text());
+var actionMapping = {{ actiontypes|tojson|safe }}
 function getFlowEntry(dpid,callback)
 {
 	$.getJSON(getFlowAddr+dpid,callback);
@@ -136,7 +141,7 @@ function deleteFLowEntry(index,tr)
 	}
 	var entry = currentEnts[index];
 	var actions = [];
-	entry['actions'] = entry['actions'].split(';');
+	/*entry['actions'] = entry['actions'].split(';');
 	for(var x in entry['actions'])
 	{
 		var actionsplit = entry['actions'][x].split(':')
@@ -144,7 +149,7 @@ function deleteFLowEntry(index,tr)
 		var action = {'type':actionsplit[0],'port':actions[1]};	
 		actions.push(action);
 	}
-	entry.actions = actions
+	entry.actions = actions*/
 	var data = $.toJSON(entry);
 	$.post(deleteFlowAddr,{'arg':data},function(data){
 		if(data.status == 'success')
@@ -157,6 +162,27 @@ function deleteFLowEntry(index,tr)
 			alert('Delete Failed for : '+data.reason);
 		}
 	});
+}
+function updateFlowEntry(index,tr)
+{
+	if(currentEnts.length < index)
+	{
+		alert("System Error!Please refresh current page");
+	}
+	var entry = currentEnts[index];
+	var data = $.toJSON(entry);
+	location.href = updateFlowAddr+"?arg="+data;
+	/*$.post(updateFlowAddr,{'arg':data},function(data){
+		if(data.status == 'success')
+		{
+			alert("Delete Entry Successfully!");
+			tr.remove();
+		}		
+		else 
+		{
+			alert('Delete Failed for : '+data.reason);
+		}
+	});*/
 }
 $(document).ready(function(){
 	CONF.force.width = $("#topoContainer").width();
@@ -199,6 +225,13 @@ $(document).ready(function(){
 		var index = parseInt(tr.attr('data-index'));
 		console.lot("the index ready to delte is : "+index);
 		deleteFLowEntry(index,tr);
+	})
+	$("table").on('click','.updatelink',function(e){
+		e.preventDefault();
+		var tr = $(this).parent().parent().parent();
+		var index = parseInt(tr.attr('data-index'));
+		console.lot("the index ready to update is : "+index);
+		updateFlowEntry(index,tr);
 	})
 })
 </script>
