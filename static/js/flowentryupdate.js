@@ -12,7 +12,7 @@
 	$.checkableForm = function(formid,submitcallback)
 	{
 		var form = $(formid);
-		form.find('input[type="text"],input[type="password"]').val('');
+		//form.find('input[type="text"],input[type="password"]').val('');
 		var beChecking = form.find('input.checkable,select.checkable');
 		var submittable = false;
 		var errorNum = 0;
@@ -106,8 +106,8 @@
 					var rawValue = $(this).val();
 					var currentDom = this;
 					if(rawValue && rawValue!=''){
-						var rawSelectType = rawValue.split(':')[0];
-						var rawContent = rawValue.split(":")[1];
+						var rawSelectType = rawValue.split('-')[0];
+						var rawContent = rawValue.split("-")[1];
 					}
 					modal_select.val('');
 					modal_select.html('');
