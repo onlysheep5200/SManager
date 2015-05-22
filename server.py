@@ -3,6 +3,7 @@ from flask import Flask, jsonify, request, render_template,url_for
 from handlers import DefaultRequestHandler 
 from handlers import config
 import json
+import copy
 app = Flask(__name__)
 requestHandler = DefaultRequestHandler.DefaultRequestHandler()
 matchtypes = ['in_port','in_phy_port','metadata','dl_dst','dl_src','eth_dst','eth_src','dl_type','eth_type','dl_vlan',\
@@ -15,12 +16,59 @@ actionmapping = {'OUTPUT':'port','COPY_TTL_OUT':None,'COPY_TTL_IN':None,'SET_MPL
         'PUSH_VLAN':'ethertype','POP_VLAN':None,'PUSH_MPLS':'ethertype','POP_MPOLS':'ethertype','SET_QUEUE':'queue_id',\
         'GROUP':'group_id','SET_NW_TTL':'nw_ttl','DEC_NW_TTL':None,'SET_FIELD':['field','value'],'PUSH_PBB':'ethertype',\
         'POP_PBB':None,'GOTO_TABLE':'table_id','WRITE_METADATA':['metadata','metadata_mask'],'METER':'meter_id'}
+
+def actionParse(actions):
+    '''
+    parse actions from string to array
+    '''
+    results = []
+    strs = actions.split(';')
+    for x in strs : 
+        if x.find(':') < 0:
+            results.append(dict(type=x))
+        else:
+            fields = x.split(':')
+            fields = [fields[0],':'.join(fields[1:])]
+            t = fields[0] 
+            print fields
+            if type(actionmapping[t.upper()]) == type('s'):
+                action = dict(type=t)
+                action[actionmapping[t.upper()]] = fields[1]
+                results.append(action)
+            elif t.upper() == 'SET_FIELD':
+                #tmp = json.loads(fields[1].strip())
+                fields[1] = fields[1].strip().replace('{','{"')
+                fields[1] = fields[1].replace(':','":')
+                tmp = json.loads(fields[1])
+                action = dict(type=t.upper(),field=tmp.keys()[0],value=tmp.values()[0])
+                results.append(action)
+            elif t.upper() == 'WRITE_METADATA':
+                results.append(dict(type=t,metadata=fields[1].split('/')[0],metadata_mask=fields[1].split('/')[1]))
+            else:
+                return None
+        return results
+
+def actionStringify(actions):
+    actionText = {}
+    for action in actions:
+        mapping = actionmapping[action['type']]
+        t = action['type']
+        if mapping==None:
+            actionText[t] = ''
+        elif type(mapping) == type('s'):
+            actionText[t] ='%s:%s'%(str(action.keys()[1]),str(action.values()[1]))
+        elif action == 'SET_FIELD':
+            actionText[t] = "%s:%s,%s:%s"%('field', action['field'], 'value', str(action['value']))
+        elif action == 'WRITE_METADATA':
+            actionText[t] = "%s:%s,%s:%s"%('metadata',str(action['metadata']),'metadata_mask',str(action['metadata_mask']))
+        return actionText
+
 #abour pages
 @app.route("/index")
 def index() : 
     if(request.args.get('type') == 'router'):
         return render_template('smrouterindex.html',wsServerAddr= 'ws://127.0.0.1:8080/v1.0/topology/ws',currentSlide='router')
-    return render_template('smindex.html',wsServerAddr= 'ws://127.0.0.1:8080/v1.0/topology/ws',currentSlide='index')
+    return render_template('smindex.html',wsServerAddr= 'ws://127.0.0.1:8080/v1.0/topology/ws',currentSlide='index',actiontypes=actionmapping)
 
 @app.route("/add",methods=['GET','POST'])
 def add():
@@ -30,7 +78,33 @@ def add():
     else : 
         arg = request.form.get('arg');
         arg = json.loads(arg);
+        print arg
         return jsonify(requestHandler.request('addflowentry',arg))
+
+@app.route("/update",methods=['GET','POST'])
+def update():
+    if request.method == 'GET':
+        rawEntry = request.args.get('arg')
+        if rawEntry:
+            rawEntry = json.loads(rawEntry)
+            rawEntry['actions'] = actionParse(rawEntry['actions'])
+            entry = copy.deepcopy(rawEntry) 
+            entry['actions'] = actionStringify(entry['actions'])
+            return render_template('smupdate.html',rawEntry=rawEntry,actiontypes=actionmapping.keys(),matchtypes = matchtypes,entry=entry)
+        else : 
+            return "Invalid Flow Entry !"
+    elif request.method == 'POST':
+        arg = request.form.get('arg')
+        raw = request.form.get('raw')
+        if arg : 
+            raw = json.loads(raw)
+            arg = json.loads(arg)
+            r = requestHandler.request('deleteflowentry',raw)
+            if r['status'] == 'success':
+                return jsonify(requestHandler.request('addflowentry',arg))
+            else:
+                return jsonify(r)
+
 #for ajax
 @app.route("/getSwitchList")
 def switchList() : 
@@ -82,6 +156,7 @@ def entrynum():
 def deleteentry():
     arg = request.form.get('arg')
     arg = json.loads(arg)    
+    arg["actions"] = actionParse(arg["actions"])
     return jsonify(requestHandler.request('deleteflowentry',arg))
 
 @app.route("/topoSwitches")
@@ -103,4 +178,4 @@ def clearcache():
 
 if __name__ == '__main__' : 
     app.debug = True
-    app.run()
+    app.run(host="0.0.0.0")
