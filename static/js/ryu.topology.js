@@ -2,6 +2,7 @@
 var switches_addr = "/v1.0/topology/switches";
 var links_addr = "/v1.0/topology/links";
 var routerSvgUrl = './router.svg';
+var cloudSvgUrl = './Cartoon_cloud.svg'
 var flowUrl = '/stats/flow';
 var containerQuery = '#topoContainer'
 var CONF = {
@@ -20,6 +21,7 @@ function initWsClient(wsUrl){
 var ws = new WebSocket(wsUrl);
 ws.onmessage = function(event) {
     var data = JSON.parse(event.data);
+    console.log(data);
 
     var result = rpc[data.method](data.params);
 
