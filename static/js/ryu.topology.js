@@ -131,7 +131,7 @@ var topo = {
         this.add_links(data.links);
     },
     add_nodes: function (nodes) {
-        console.log('add nodes' + nodes);
+        console.log('add nodes' + JSON.stringify(nodes));
         for (var i = 0; i < nodes.length; i++) {
             this.nodes.push(nodes[i]);
         }
