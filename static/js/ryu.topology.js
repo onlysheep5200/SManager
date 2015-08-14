@@ -131,6 +131,7 @@ var topo = {
         this.add_links(data.links);
     },
     add_nodes: function (nodes) {
+        console.log('add nodes' + nodes);
         for (var i = 0; i < nodes.length; i++) {
             this.nodes.push(nodes[i]);
         }
@@ -275,6 +276,7 @@ function initialize_topology() {
     	{
         d3.json(links_addr, function(error, links) {
 	    if(links['status'] == 'success'){
+                console.log('start initialize');
             	topo.initialize({switches: switches['content'], links: links['content']});
             	elem.update();
 	    }
