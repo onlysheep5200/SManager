@@ -12,8 +12,8 @@ var CONF = {
     },
     imageN:
     {
-        width:90,
-        height:80
+        width:151,
+        height:98
     },
     force: {
         width: $(containerQuery).width(),
