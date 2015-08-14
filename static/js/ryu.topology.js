@@ -80,7 +80,7 @@ function _dragstart(d) {
     d3.select(this).classed("fixed", d.fixed = true);
 }
 elem.node = elem.svg.selectAll(".node");
-elem.cloud = elem.svg.selectAll('.network');
+elem.network = elem.svg.selectAll('.network');
 elem.link = elem.svg.selectAll(".link");
 elem.port = elem.svg.selectAll(".port");
 elem.update = function () {
