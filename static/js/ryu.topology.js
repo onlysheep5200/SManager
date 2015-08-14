@@ -94,7 +94,7 @@ elem.update = function () {
     this.link.enter().append("line")
         .attr("class", "link");
 
-    this.node = this.node.data(_.filter(topo.allnodes,function(d){return d.dpid}));
+    this.node = this.node.data(_.filter(topo.allnodes,function(d){return typeof(d.dpid)!="undefined";}));
     this.node.exit().remove();
     var nodeEnter = this.node.enter().append("g")
         .attr("class", "node")
@@ -111,7 +111,7 @@ elem.update = function () {
         .attr("dy", CONF.image.height-10)
         .text(function(d) { return "dpid: " + trim_zero(d.dpid); });
     
-    this.network = this.network.data(_.filter(topo.allnodes,function(d){return !d.dpid}));
+    this.network = this.network.data(_.filter(topo.allnodes,function(d){return typeof(d.dpid) == "undefined";}));
     this.network.exit().remove();
     var networkEnter = this.network.enter().append('g')
         .attr('class','network')
@@ -197,14 +197,14 @@ var topo = {
                 target: this.nodes.length+this.networks.length-1,
                 port: {
                     src: links[i].src,
-                    dst: links[i].dst
+                    dst: null
                 }
             };
-            var link1 = {
+            var link2 = {
                 source: this.nodes.length+this.networks.length-1,
                 target: dst_index,
                 port: {
-                    src: links[i].src,
+                    src: null,
                     dst: links[i].dst
                 }
             }
@@ -338,6 +338,7 @@ function initialize_topology() {
                 console.log('start initialize');
             	topo.initialize({switches: switches['content'], links: links['content']});
             	elem.update();
+                console.log(topo);
 	    }
         });
 	}
