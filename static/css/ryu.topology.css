@@ -8,8 +8,16 @@
     fill: #C0C0C0;
 }
 
+.network.fixed {
+    fill: #C0C0C0;
+}
+
 .node text {
     font-size: 14px;
+}
+
+.network text {
+	font-size: 14px;
 }
 
 .link {

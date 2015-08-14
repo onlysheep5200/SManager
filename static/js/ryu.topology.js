@@ -62,6 +62,7 @@ function _tick() {
         .attr("y2", function(d) { return d.target.y; });
 
     elem.node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+    elem.network.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 
     elem.port.attr("transform", function(d) {
         var p = topo.get_port_point(d);
@@ -126,7 +127,7 @@ elem.update = function () {
         .attr("height", CONF.imageN.height);
     networkEnter.append("text")
         .attr("dx", -CONF.imageN.width/2)
-        .attr("dy", CONF.imageN.height/2)
+        .attr("dy", CONF.imageN.height－10)
         .text(function(d) { return "IPV4 network" });
 
 
