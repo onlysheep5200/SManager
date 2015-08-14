@@ -10,6 +10,11 @@ var CONF = {
         width: 50,
         height: 40
     },
+    imageN:
+    {
+        width:90,
+        height:80
+    },
     force: {
         width: $(containerQuery).width(),
         height: $(containerQuery).height(),
@@ -75,11 +80,12 @@ function _dragstart(d) {
     d3.select(this).classed("fixed", d.fixed = true);
 }
 elem.node = elem.svg.selectAll(".node");
+elem.cloud = elem.svg.selectAll('.network');
 elem.link = elem.svg.selectAll(".link");
 elem.port = elem.svg.selectAll(".port");
 elem.update = function () {
     this.force
-        .nodes(topo.nodes)
+        .nodes(topo.allnodes)
         .links(topo.links)
         .start();
 
@@ -88,7 +94,7 @@ elem.update = function () {
     this.link.enter().append("line")
         .attr("class", "link");
 
-    this.node = this.node.data(topo.nodes);
+    this.node = this.node.data(_.filter(topo.allnodes,function(d){return d.dpid}));
     this.node.exit().remove();
     var nodeEnter = this.node.enter().append("g")
         .attr("class", "node")
@@ -104,6 +110,25 @@ elem.update = function () {
         .attr("dx", -CONF.image.width/2)
         .attr("dy", CONF.image.height-10)
         .text(function(d) { return "dpid: " + trim_zero(d.dpid); });
+    
+    this.network = this.network.data(_.filter(topo.allnodes,function(d){return !d.dpid}));
+    this.network.exit().remove();
+    var networkEnter = this.network.enter().append('g')
+        .attr('class','network')
+        .on("dblclick", function(d) { d3.select(this).classed("fixed", d.fixed = false); })
+        .call(this.drag);
+
+    networkEnter.append("image")
+        .attr("xlink:href", cloudSvgUrl)
+        .attr("x", -CONF.imageN.width/2)
+        .attr("y", -CONF.imageN.height/2)
+        .attr("width", CONF.imageN.width)
+        .attr("height", CONF.imageN.height);
+    networkEnter.append("text")
+        .attr("dx", -CONF.imageN.width/2)
+        .attr("dy", CONF.imageN.height/2)
+        .text(function(d) { return "IPV4 network" });
+
 
     var ports = topo.get_ports();
     this.port.remove();
@@ -124,7 +149,9 @@ function is_valid_link(link) {
 
 var topo = {
     nodes: [],
+    allnodes : [],
     links: [],
+    networks:[],
     node_index: {}, // dpid -> index of nodes array
     initialize: function (data) {
         this.add_nodes(data.switches);
@@ -135,6 +162,7 @@ var topo = {
         for (var i = 0; i < nodes.length; i++) {
             this.nodes.push(nodes[i]);
         }
+        this.allnodes = this.nodes.concat(this.networks);
         this.refresh_node_index();
     },
     add_links: function (links) {
@@ -146,15 +174,42 @@ var topo = {
             var dst_dpid = links[i].dst.dpid;
             var src_index = this.node_index[src_dpid];
             var dst_index = this.node_index[dst_dpid];
-            var link = {
+            var newNetwork = 
+            {
+                source : src_dpid,
+                source_index : src_index,
+                target : dst_dpid,
+                target_index : dst_index,
+                type : 'IPV4'
+            };
+            this.networks.push(newNetwork);
+            this.refresh_all_nodes();
+            // var link = {
+            //     source: src_index,
+            //     target: dst_index,
+            //     port: {
+            //         src: links[i].src,
+            //         dst: links[i].dst
+            //     }
+            // }
+            var link1 = {
                 source: src_index,
+                target: this.nodes.length+this.networks.length-1,
+                port: {
+                    src: links[i].src,
+                    dst: links[i].dst
+                }
+            };
+            var link1 = {
+                source: this.nodes.length+this.networks.length-1,
                 target: dst_index,
                 port: {
                     src: links[i].src,
                     dst: links[i].dst
                 }
             }
-            this.links.push(link);
+            this.links.push(link1);
+            this.links.push(link2);
         }
     },
     delete_nodes: function (nodes) {
@@ -237,6 +292,10 @@ var topo = {
             this.node_index[this.nodes[i].dpid] = i;
         }
     },
+    refresh_all_nodes : function()
+    {
+        this.allnodes = this.nodes.concat(this.networks);
+    }
 }
 
 var rpc = {
