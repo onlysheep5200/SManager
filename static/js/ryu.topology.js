@@ -92,8 +92,9 @@ elem.update = function () {
 
     this.link = this.link.data(topo.links);
     this.link.exit().remove();
-    this.link.enter().append("line")
-        .attr("class", "link");
+    this.link.enter().append("g")
+        .attr("class", "link")
+        .append("line");
 
     this.node = this.node.data(_.filter(topo.allnodes,function(d){return typeof(d.dpid)!="undefined";}));
     this.node.exit().remove();
