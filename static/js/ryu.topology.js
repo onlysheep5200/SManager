@@ -126,7 +126,7 @@ elem.update = function () {
         .attr("width", CONF.imageN.width)
         .attr("height", CONF.imageN.height);
     networkEnter.append("text")
-        .attr("dx", -CONF.imageN.width/2)
+        .attr("dx", -CONF.imageN.width/2-10)
         .attr("dy", CONF.imageN.height-10)
         .text(function(d) { return "IPV4 network" });
 
