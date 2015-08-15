@@ -185,7 +185,7 @@ function updateFlowEntry(index,tr)
 		}
 	});*/
 }
-$(document).ready(function(){
+window.onload = function(){
 	CONF.force.width = $("#topoContainer").width();
 	CONF.force.height = $('#topoContainer').height();
 	topo_main();
@@ -234,6 +234,6 @@ $(document).ready(function(){
 		console.lot("the index ready to update is : "+index);
 		updateFlowEntry(index,tr);
 	})
-})
+}
 </script>
 {% endblock %}

@@ -265,8 +265,10 @@ var topo = {
                 p.link_dir = dir;
                 return ports.push(p);
             }
-            _push(this.links[i].port.src, "source");
-            _push(this.links[i].port.dst, "target");
+            if (this.links[i].port.src) 
+                _push(this.links[i].port.src, "source");
+            if (this.links[i].port.dst)
+                _push(this.links[i].port.dst, "target");
         }
 
         return ports;
