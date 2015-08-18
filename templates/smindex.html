@@ -3,7 +3,7 @@
     <link href="static/css/ryu.topology.css" rel="stylesheet">
 {% endblock %}
 {% block main %}
-		<div class="well hero-unit" id="topoContainer" style="height:250px">
+		<div class="well hero-unit" id="topoContainer" style="height:400px;padding:0px;">
             <!-- <h1>Welcome, Admin</h1>
             <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Etiam eget ligula eu lectus lobortis condimentum. Aliquam nonummy auctor massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. </p>
             <p><a class="btn btn-success btn-large" href="users.html">Manage Users &raquo;</a></p> -->
@@ -188,6 +188,7 @@ function updateFlowEntry(index,tr)
 window.onload = function(){
 	CONF.force.width = $("#topoContainer").width();
 	CONF.force.height = $('#topoContainer').height();
+	console.log(CONF);
 	topo_main();
 	$.getJSON("{{ url_for('topoSwitches') }}",function(data){
 		$("#switchnum").text(data['content'].length);	

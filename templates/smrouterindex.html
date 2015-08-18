@@ -142,6 +142,12 @@ $(document).ready(function(){
 				console.log(data);
 				trafficInfo = data;
 				initIndexEntryTable(dpids);
+				setInterval(function(){
+					$.getJSON(trafficInfoAddr,function(d){
+						trafficInfo = d;
+						initIndexEntryTable(dpids);	
+					});		
+				},10000);
 			}
 		})
 	});

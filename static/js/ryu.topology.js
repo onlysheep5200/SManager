@@ -445,7 +445,7 @@ function updateDelay()
 						if($(this).attr('class'))
 						{
 							var index = $(this).attr('class').split(' ')[0];
-							$(this).text(networkDelays[index]);
+							$(this).text(networkDelays[index]+'ms');
 						}
 					})
 				}
@@ -463,7 +463,7 @@ function topo_main() {
 			console.log(delays);
 			networkDelays = parseDelay(delays);
     		initialize_topology();
-			setInterval("updateDelay()",1000);
+			setInterval("updateDelay()",10000);
 		}
 		else{
 			console.log(err);
