@@ -34,4 +34,12 @@
 .port text {
     font-size: 10px;
 }
+.delay rect {
+    stroke: black;
+    fill: #C5F9F9;
+}
+
+.delay text {
+    font-size: 10px;
+}
 

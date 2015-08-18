@@ -2,9 +2,29 @@
 var switches_addr = "/v1.0/topology/switches";
 var links_addr = "/v1.0/topology/links";
 var routerSvgUrl = './router.svg';
-var cloudSvgUrl = './Cartoon_cloud.svg'
+var cloudSvgUrl = '/static/js/Cartoon_cloud.svg'
 var flowUrl = '/stats/flow';
-var containerQuery = '#topoContainer'
+var containerQuery = '#topoContainer';
+var initDelayUrl = 'static/js/delay_info.json?'+Math.random();
+var networkDelays = {};
+
+function parseDelay(data){
+	var delays = {};
+	for (var i in data)
+	{
+		var portInfo = data[i];
+		for (var port in portInfo)
+		{
+			var other = portInfo[port][0];
+			var delay = portInfo[port][1].toFixed(2);
+			delays[i+'-'+other] = delay;
+			delays[other+'-'+i] = delay;
+		}
+	}
+	console.log(delays);
+	return delays;
+}
+
 var CONF = {
     image: {
         width: 50,
@@ -68,6 +88,7 @@ function _tick() {
         var p = topo.get_port_point(d);
         return "translate(" + p.x + "," + p.y + ")";
     });
+
 }
 elem.drag = elem.force.drag().on("dragstart", _dragstart);
 function _dragstart(d) {
@@ -84,6 +105,7 @@ elem.node = elem.svg.selectAll(".node");
 elem.network = elem.svg.selectAll('.network');
 elem.link = elem.svg.selectAll(".link");
 elem.port = elem.svg.selectAll(".port");
+elem.delay = elem.svg.selectAll('.delay');
 elem.update = function () {
     this.force
         .nodes(topo.allnodes)
@@ -92,9 +114,10 @@ elem.update = function () {
 
     this.link = this.link.data(topo.links);
     this.link.exit().remove();
-    this.link.enter().append("g")
+    this.link.enter().append('line')
         .attr("class", "link")
-        .append("line");
+		.attr("id",function(d){console.log(d);return d.source.index+"to"+d.target.index;})	
+		.append('title').text('100ms');	
 
     this.node = this.node.data(_.filter(topo.allnodes,function(d){return typeof(d.dpid)!="undefined";}));
     this.node.exit().remove();
@@ -127,9 +150,20 @@ elem.update = function () {
         .attr("width", CONF.imageN.width)
         .attr("height", CONF.imageN.height);
     networkEnter.append("text")
-        .attr("dx", -CONF.imageN.width/2+10)
-        .attr("dy", CONF.imageN.height-10)
+        .attr("dx", -CONF.imageN.width/2+20)
+        .attr("dy", CONF.imageN.height-20)
         .text(function(d) { return "IPV4 network" });
+
+	networkEnter.append('text')
+		.attr('dy',10)
+		.attr('dx',-15)
+		.attr('class',function(d){
+			return d.source+'-'+d.target+' '+d.target+'-'+d.source;
+		})
+		.text(function(d){
+			var index = d.source + '-' + d.target;
+			return networkDelays[index]+'ms';
+		});
 
 
     var ports = topo.get_ports();
@@ -143,6 +177,35 @@ elem.update = function () {
         .attr("dx", -3)
         .attr("dy", 3)
         .text(function(d) { return trim_zero(d.port_no); });
+	
+	/*
+	portEnter.append('text')
+	.attr('dx',function(d){
+		if(d.link_dir == 'source' )
+			return 80;
+		else 
+			return -80;
+	})
+	.attr('dy',3)
+	.text(function(d){
+		return d.link_delay+'ms';
+	});*/
+/*
+	this.delay.remove();
+	this.delay = this.svg.selectAll('.delay').data(ports);
+	var delayEnter = this.port.enter().append("g")
+		.attr('class','delay');
+	delayEnter.append('rect')
+	.attr('width','80px')
+	.attr('height','20px')
+	.attr('dx',-30);
+	delayEnter.append('text')
+	.attr('dx',-70)
+	.attr('dy',3)
+	.text(function(d){
+		return d.link_delay+"ms";
+	});
+	*/
 };
 
 function is_valid_link(link) {
@@ -154,6 +217,7 @@ var topo = {
     allnodes : [],
     links: [],
     networks:[],
+	delays : [],
     node_index: {}, // dpid -> index of nodes array
     initialize: function (data) {
         this.add_nodes(data.switches);
@@ -178,9 +242,9 @@ var topo = {
             var dst_index = this.node_index[dst_dpid];
             var newNetwork = 
             {
-                source : src_dpid,
+                source : parseInt(src_dpid),
                 source_index : src_index,
-                target : dst_dpid,
+                target : parseInt(dst_dpid),
                 target_index : dst_index,
                 type : 'IPV4'
             };
@@ -210,8 +274,16 @@ var topo = {
                     dst: links[i].dst
                 }
             }
+			var delay = {};
+			var delay2 = {};
+			delay["key"] = src_index+'to'+(this.nodes.length+this.networks.length-1);
+			delay["value"] = 100;
+			delay2["key"]= (this.nodes.length+this.networks.length-1)+"to"+dst_index;
+			delay2["value"] = 100;
             this.links.push(link1);
             this.links.push(link2);
+			this.delays.push(delay);
+			this.delays.push(delay2);
         }
     },
     delete_nodes: function (nodes) {
@@ -255,6 +327,7 @@ var topo = {
         var ports = [];
         var pushed = {};
         for (var i = 0; i < this.links.length; i++) {
+			var that = this;
             function _push(p, dir) {
                 key = p.dpid + ":" + p.port_no;
                 if (key in pushed) {
@@ -264,6 +337,7 @@ var topo = {
                 pushed[key] = true;
                 p.link_idx = i;
                 p.link_dir = dir;
+				p.link_delay = that.get_link_delay(that.links[i]);
                 return ports.push(p);
             }
             if (this.links[i].port.src) 
@@ -290,6 +364,10 @@ var topo = {
 
         return {x: x, y: y};
     },
+	get_link_delay : function(link){
+			//TODO:return the link delay 
+			return 100;
+	},
     refresh_node_index: function(){
         this.node_index = {};
         for (var i = 0; i < this.nodes.length; i++) {
@@ -353,7 +431,44 @@ function initialize_topology() {
     });
 }
 
+function updateDelay()
+{
+	d3.json(initDelayUrl+Math.random(),function(err,delays){
+		if(!err)
+		{
+			var newdelays = parseDelay(delays);
+			for(var key in newdelays){
+				if(newdelays[key] != networkDelays[key])
+				{
+					networkDelays = newdelays;
+					$('svg .network text').each(function(){
+						if($(this).attr('class'))
+						{
+							var index = $(this).attr('class').split(' ')[0];
+							$(this).text(networkDelays[index]);
+						}
+					})
+				}
+			}
+		}
+		
+	});
+}
+
 function topo_main() {
-    initialize_topology();
+	d3.json(initDelayUrl,function(err,delays){
+		if(!err)
+		{
+			console.log('delays is ');
+			console.log(delays);
+			networkDelays = parseDelay(delays);
+    		initialize_topology();
+			setInterval("updateDelay()",1000);
+		}
+		else{
+			console.log(err);
+		}
+
+	})
 }
 

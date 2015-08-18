@@ -40,9 +40,9 @@
 						<th>DPID</th>
 						<th>dp_desc</th>
 						<th>hw_desc</th>
-						<th>mfr_desc</th>
-						<th>serial number</th>
-						<th>sw_desc</th>
+						<th>port1</th>
+						<th>port2</th>
+						<th>port3</th>
 						<th>flow entry count</th>
 						<th>packet count</th>
 					</tr>
@@ -62,9 +62,9 @@
 					<td><%= dpid  %></td>
 					<td><%= dp_desc %></td>
 					<td><%= hw_desc  %></td>
-					<td><%= mfr_desc  %></td>
-					<td><%= serial_num %></td>
-					<td><%= sw_desc %></td>
+					<td><%= port1  %></td>
+					<td><%= port2 %></td>
+					<td><%= port3 %></td>
 					<td><%= flowentry_count %>
 					<td><%= packet_count %></td>
 				</tr>
@@ -78,9 +78,11 @@ routerSvgUrl = "{{ url_for('static',filename='js/router.svg') }}"
 var aggregateflowAddr = "{{ url_for('aggregateflow',id=0) }}";
 var containerQuery = "#topoContainer"
 var getFlowAddr = "{{ url_for('flow',id=0) }}";
-var getSwitchInfoAddr = "{{ url_for('switchInfo',id=0) }}"
+var getSwitchInfoAddr = "{{ url_for('switchInfo',id=0) }}";
+var trafficInfoAddr = "{{ url_for('static',filename = 'js/traffic_info.json') }}";
 var currentEnts = [];
 var entry_temp = _.template($("#entry_temp").text());
+var trafficInfo = {};
 function getFlowEntry(dpid,callback)
 {
 	$.getJSON(getFlowAddr+dpid,callback);
@@ -103,6 +105,9 @@ function initIndexEntryTable(switches)
 				 $.getJSON(getSwitchInfoAddr+switches[s],function(data){
 					var info = data['content'][''+dpid];
 					info.dpid = dpid;
+					info.port1 = trafficInfo[dpid]['1'];
+					info.port2 = trafficInfo[dpid]['2'];
+					info.port3 = trafficInfo[dpid]['3'];
 					(function(info){
 					 $.getJSON(aggregateflowAddr+dpid,function(data){
 						console.log(data);
@@ -131,7 +136,14 @@ $(document).ready(function(){
 			$("#switchselect").append($('<option value="'+dpid+'">Switch '+dpid+'</option>'));
 		}
 		console.log(dpids);
-		initIndexEntryTable(dpids);
+		$.getJSON(trafficInfoAddr,function(data){
+			if(data)
+			{
+				console.log(data);
+				trafficInfo = data;
+				initIndexEntryTable(dpids);
+			}
+		})
 	});
 
 	$.getJSON("{{ url_for('topoLinks') }}",function(data){
