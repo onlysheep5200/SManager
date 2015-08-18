@@ -242,9 +242,9 @@ var topo = {
             var dst_index = this.node_index[dst_dpid];
             var newNetwork = 
             {
-                source : parseInt(src_dpid),
+                source : parseInt(src_dpid,16),
                 source_index : src_index,
-                target : parseInt(dst_dpid),
+                target : parseInt(dst_dpid,16),
                 target_index : dst_index,
                 type : 'IPV4'
             };
