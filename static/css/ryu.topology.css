@@ -5,11 +5,11 @@
 }
 
 .node.fixed {
-    fill: #C0C0C0;
+    fill: #000000;
 }
 
 .network.fixed {
-    fill: #C0C0C0;
+    fill: #000000;
 }
 
 .node text {
