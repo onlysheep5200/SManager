@@ -131,7 +131,7 @@ $(document).ready(function(){
 		var dpids = [];
 		for(var x in switches)
 		{
-			var dpid = parseInt(switches[x]['dpid']);
+			var dpid = parseInt(switches[x]['dpid'],16);
 			dpids.push(dpid);
 			$("#switchselect").append($('<option value="'+dpid+'">Switch '+dpid+'</option>'));
 		}
