@@ -109,7 +109,7 @@ function initIndexEntryTable(switches)
 					info.port2 = trafficInfo[dpid]['2'];
 					info.port3 = trafficInfo[dpid]['3'];
 					(function(info){
-					 $.getJSON(aggregateflowAddr+dpid,function(data){
+					 $.getJSON(aggregateflowAddr+(dpid).toString(16),function(data){
 						console.log(data);
 						info['packet_count'] = data['content'][info.dpid][0]['packet_count'];//todo:caculate the sum of all list item
 						info['flowentry_count'] = data['content'][info.dpid][0]['flow_count'];//todo:caculate the sum of all list item
