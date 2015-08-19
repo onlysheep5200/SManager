@@ -108,16 +108,12 @@ function initIndexEntryTable(switches)
 					info.port1 = trafficInfo[dpid]['1'];
 					info.port2 = trafficInfo[dpid]['2'];
 					info.port3 = trafficInfo[dpid]['3'];
-					(function(info){
-					 $.getJSON(aggregateflowAddr+(dpid).toString(16),function(data){
-						console.log(data);
-						info['packet_count'] = data['content'][info.dpid][0]['packet_count'];//todo:caculate the sum of all list item
-						info['flowentry_count'] = data['content'][info.dpid][0]['flow_count'];//todo:caculate the sum of all list item
-						callback(info);		
-					})
-					 })(info);
-				})
+					info['packet_count'] = 0//todo:caculate the sum of all list item
+					info['flowentry_count'] = 0;//todo:caculate the sum of all list item
+					callback(info);		
+				 }
 				 })(switches[s]);
+
 		}
 	}
 }
