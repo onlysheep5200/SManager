@@ -101,8 +101,8 @@ function initIndexEntryTable(switches)
 	{
 		for(var s in switches)
 		{
-				(function(dpid){
-				 $.getJSON(getSwitchInfoAddr+switches[s],function(data){
+			(function(dpid){
+				$.getJSON(getSwitchInfoAddr+dpid,function(data){
 					var info = data['content'][''+dpid];
 					info.dpid = dpid;
 					info.port1 = trafficInfo[dpid]['1'];
@@ -111,9 +111,8 @@ function initIndexEntryTable(switches)
 					info['packet_count'] = 0;//todo:caculate the sum of all list item
 					info['flowentry_count'] = 0;//todo:caculate the sum of all list item
 					callback(info);		
-				 }
-				 })(switches[s]);
-
+				 });
+			});
 		}
 	}
 }
