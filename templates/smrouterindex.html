@@ -93,6 +93,7 @@ function initIndexEntryTable(switches)
 	$("#entries").html('');
 	function callback(info)
 	{
+		console.log('info is ');		
 		console.log(info);
 		$('#entries').append($(entry_temp(info)));
 	}
@@ -111,7 +112,7 @@ function initIndexEntryTable(switches)
 					info['flowentry_count'] = 0;//todo:caculate the sum of all list item
 					callback(info);		
 				 });
-			});
+			})(switches[s]);
 		}
 	}
 }

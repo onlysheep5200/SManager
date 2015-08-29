@@ -7,6 +7,7 @@ var flowUrl = '/stats/flow';
 var containerQuery = '#topoContainer';
 var initDelayUrl = 'static/js/delay_info.json?'+Math.random();
 var networkDelays = {};
+var netInfo = {};
 
 function parseDelay(data){
 	var delays = {};
@@ -152,7 +153,7 @@ elem.update = function () {
     networkEnter.append("text")
         .attr("dx", -CONF.imageN.width/2+20)
         .attr("dy", CONF.imageN.height-20)
-        .text(function(d) { return "IPV4 network" });
+        .text(function(d) { return d['type']+' Network' });
 
 	networkEnter.append('text')
 		.attr('dy',10)
@@ -209,7 +210,7 @@ elem.update = function () {
 };
 
 function is_valid_link(link) {
-    return (link.src.dpid < link.dst.dpid)
+    return (link.src.dpid < link.dst.dpid)&&(link.src.port_no<=3)&&(link.dst.port_no<=3);
 }
 
 var topo = {
@@ -246,7 +247,7 @@ var topo = {
                 source_index : src_index,
                 target : parseInt(dst_dpid,16),
                 target_index : dst_index,
-                type : 'IPV4'
+                type : netInfo[parseInt(src_dpid,16)+'-'+parseInt(dst_dpid,16)]
             };
             this.networks.push(newNetwork);
             this.refresh_all_nodes();
@@ -456,6 +457,25 @@ function updateDelay()
 }
 
 function topo_main() {
+d3.json('/static/js/net_info.json',function(err,data){
+	if(data)
+	{
+		for(var x in data)
+		{
+			var item = data[x];
+			var key1 = item[0]+'-'+item[1];
+			var key2 = item[1]+'-'+item[0];
+			netInfo[key1] = item[2];
+			netInfo[key2] = item[2];
+		}
+		console.log('netinfo is ');
+		console.log(netInfo);
+	}
+	else
+	{
+		console.log('can not load net info data');
+		console.log(err);
+	}
 	d3.json(initDelayUrl,function(err,delays){
 		if(!err)
 		{
@@ -470,5 +490,6 @@ function topo_main() {
 		}
 
 	})
+});
 }
 
